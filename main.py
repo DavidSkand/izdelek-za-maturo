@@ -38,13 +38,11 @@ while(camera.isOpened()):
             xy_position = f"X: {int(center[0])}, Y: {int(center[1])}"
             cv2.putText(frame, xy_position, (bottom_right[0], bottom_right[1] + 20),  cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
 
-        elapsed_time = time.time() - start_time  # Time taken to process this frame
+        elapsed_time = time.time() - start_time  
         fps = 1 / elapsed_time  # FPS = 1 / Time per frame
 
-        # Display FPS on the frame
         cv2.putText(frame, f"FPS: {fps:.2f}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
-        # Reset the timer for the next frame
         start_time = time.time()
 
 
