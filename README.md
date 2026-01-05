@@ -41,3 +41,10 @@ Ta projekt uporablja računalniški vid za zaznavanje **AprilTagov** z uporabo k
     ```
 
 3. Pritisnite `q`, da zaprete okno kamere.
+
+## Uporabljeni deli
+-**MG90S**
+-**Laser diode 5mW red 650nm 5V**
+
+
+
