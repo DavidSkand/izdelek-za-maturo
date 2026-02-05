@@ -9,10 +9,20 @@ at_detector = Detector()
 
 start_time = time.time()  # Start the timer
 
-arduino = serial.Serial(port='COM4',   baudrate=115200, timeout=.1)
+arduino = serial.Serial(port='COM3',   baudrate=115200, timeout=.1)
+
+last_x, last_y = 320, 240
+
+last_seen = time.time()
+
+timeout = 0.5 
+
+time.sleep(2)  
+last_send = 0
+send_period = 0.05  # 20 Hz
 
 #preveri če kamera deluje
-if not camera.isOpened:  
+if not camera.isOpened():  
     print('cannot open camera')
     exit()
 
@@ -36,6 +46,19 @@ while(camera.isOpened()):
     if ret == True:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
         tags = at_detector.detect(gray)   #lista tagsx
+        now = time.time()
+
+        if len(tags) > 0:
+            # choose one tag (first one)
+            tag = tags[0]
+            center = tag.center
+            last_x, last_y = int(center[0]), int(center[1])
+            last_seen = now
+        else:
+            # no detection: hold last for a bit, then go to center
+            if now - last_seen > timeout:
+                last_x, last_y = 320, 240
+
 
         #vzame listo in kliče vsak tag posebaj
         for tag in tags: 
@@ -49,12 +72,11 @@ while(camera.isOpened()):
             cv2.putText(frame, f"ID: {tagid}", text_position, cv2.FONT_HERSHEY_SIMPLEX, (1.5), (0,0,255), 2 )
             xy_position = f"X: {int(center[0])}, Y: {int(center[1])}"
             cv2.putText(frame, xy_position, (bottom_right[0], bottom_right[1] + 20),  cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
-            arduino.write(f"{int(center[0])}\n".encode())
-            resp = arduino.readline().decode(errors="ignore").strip()
-            if resp:
-                print("arduino:", resp)
-            print(center[0])
 
+        now2 = time.time()
+        if now2 - last_send >= send_period:
+            arduino.write(f"{last_x},{last_y}\n".encode())
+            last_send = now2
 
         elapsed_time = time.time() - start_time  
         fps = 1 / elapsed_time  # FPS = 1 / Time per frame
