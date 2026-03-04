@@ -27,15 +27,6 @@ if not camera.isOpened():
     exit()
 
 
-def write_read(x):
-    arduino.write(bytes(x,   'utf-8'))
-    time.sleep(0.05)
-    data = arduino.readline()
-    return  data
-
-
-
-
 while(camera.isOpened()):
     ret, frame = camera.read()       #pridobi ret, Width,Height
     if ret == False:    
@@ -57,7 +48,7 @@ while(camera.isOpened()):
         else:
             # no detection: hold last for a bit, then go to center
             if now - last_seen > timeout:
-                last_x, last_y = 320, 240
+                last_x, last_y = -1, -1
 
 
         #vzame listo in kliče vsak tag posebaj
@@ -69,7 +60,8 @@ while(camera.isOpened()):
             bottom_right = (int(center[0] + width/2), int(center[1] + height/2))
             cv2.rectangle(frame, top_left,  bottom_right, (255,0,0), 2)
             text_position = (int(center[0] - width / 4), int(center[1] - height / 4))
-            cv2.putText(frame, f"ID: {tagid}", text_position, cv2.FONT_HERSHEY_SIMPLEX, (1.5), (0,0,255), 2 )
+            # Popravljen klic (odstranjeni odvečni oklepaji pri font scale)
+            cv2.putText(frame, f"ID: {tagid}", text_position, cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,0,255), 2 )
             xy_position = f"X: {int(center[0])}, Y: {int(center[1])}"
             cv2.putText(frame, xy_position, (bottom_right[0], bottom_right[1] + 20),  cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
 
@@ -78,20 +70,21 @@ while(camera.isOpened()):
             arduino.write(f"{last_x},{last_y}\n".encode())
             last_send = now2
 
-        elapsed_time = time.time() - start_time  
-        fps = 1 / elapsed_time  # FPS = 1 / Time per frame
-
-        cv2.putText(frame, f"FPS: {fps:.2f}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
-
+        # Izračun FPS
+        loop_time = time.time() - start_time
+        if loop_time > 0:
+            fps = 1 / loop_time
+            cv2.putText(frame, f"FPS: {fps:.2f}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+        
         start_time = time.time()
 
 
         cv2.imshow('kamera', frame)
         
-        if cv2.waitKey(25) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
 
 camera.release()
-
 cv2.destroyAllWindows()
+arduino.close()
