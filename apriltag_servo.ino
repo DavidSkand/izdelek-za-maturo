@@ -3,6 +3,8 @@
 Servo panServo;  // Pan os (X) na pinu 9
 Servo tiltServo; // Tilt os (Y) na pinu 10
 
+const int laserPin = 7;
+
 // Spremenljivke za pozicijo
 float currentPan = 90.0;
 float currentTilt = 90.0;
@@ -14,13 +16,16 @@ int last_x_pixel = 320;
 int last_y_pixel = 240;
 
 // Kalibracija - prilagodi glede na tvojo nastavitev
-int pan_min = 150;   // Kot ko je X = 0
-int pan_max = 33;    // Kot ko je X = 640
-int tilt_min = 140;  // Kot ko je Y = 480
-int tilt_max = 20;   // Kot ko je Y = 0
+int pan_min = 125;   // Kot ko je X = 0
+int pan_max = 58;    // Kot ko je X = 640
+int tilt_min = 100; 
+int tilt_max = 50;
 
 // Mrtvo območje (Deadband) - število pikslov, ki jih ignoriramo
 int deadband = 4; 
+
+int pan_offset = 0;   // tune this: + moves laser right, - moves left
+int tilt_offset = 20;  // tune this: + moves laser down, - moves up
 
 // Glajenje premikanja (Smoothing)
 float smoothing = 0.15; 
@@ -36,12 +41,15 @@ void setup() {
   Serial.begin(115200);
   Serial.setTimeout(5); // Hitra odzivnost serijske povezave
   
-  panServo.attach(9);
-  tiltServo.attach(10);
+  panServo.attach(10);
+  tiltServo.attach(9);
   
   // Postavi servomotorje na sredino ob zagonu
   panServo.write(90);
   tiltServo.write(90);
+
+  pinMode(laserPin, OUTPUT);
+  digitalWrite(laserPin, HIGH);
 }
 
 void loop() {
@@ -61,8 +69,8 @@ void loop() {
       if (abs(x_pixel - last_x_pixel) > deadband || abs(y_pixel - last_y_pixel) > deadband) {
         
         // Izračunaj nove ciljne kote
-        targetPan = floatMap(x_pixel, 0, 640, pan_min, pan_max);
-        targetTilt = floatMap(y_pixel, 0, 480, tilt_min, tilt_max);
+        targetPan  = floatMap(x_pixel, 0, 640, pan_min, pan_max)  + pan_offset;
+        targetTilt = floatMap(y_pixel, 0, 480, tilt_min, tilt_max) + tilt_offset;
         
         // Shrani zadnje piksle
         last_x_pixel = x_pixel;
@@ -80,10 +88,10 @@ void loop() {
     currentPan = (targetPan * smoothing) + (currentPan * (1.0 - smoothing));
     currentTilt = (targetTilt * smoothing) + (currentTilt * (1.0 - smoothing));
 
-    float y_offset = 5.0;
+
 
     // Premik servomotorjev z varnostno omejitvijo
     panServo.write((int)constrain(currentPan, 10, 170));
-    tiltServo.write((int)constrain(currentTilt + y_offset, 10, 170));
+    tiltServo.write((int)constrain(currentTilt, 10, 170));
   }
 }
