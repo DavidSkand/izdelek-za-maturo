@@ -47,11 +47,6 @@ while(camera.isOpened()):
             tag = tags[0]
             center = tag.center
             last_x, last_y = int(center[0]), int(center[1])
-            last_seen = now
-        else:
-            # no detection: hold last for a bit, then go to center
-            if now - last_seen > timeout:
-                last_x, last_y = -1, -1
 
 
         #vzame listo in kliče vsak tag posebaj
@@ -69,7 +64,7 @@ while(camera.isOpened()):
 
         now2 = time.time()
         if now2 - last_send >= send_period:
-           # ONLY SEND IF COORDINATES ARE VALID (prevents jumping to 0)
+           
            if last_x >= 0 and last_y >= 0:
                if abs(last_x - last_sent_x) > 2 or abs(last_y - last_sent_y) > 2:
                    arduino.write(f"{last_x},{last_y}\n".encode())
@@ -102,3 +97,6 @@ while(camera.isOpened()):
 camera.release()
 cv2.destroyAllWindows()
 arduino.close()  
+
+
+
